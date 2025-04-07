@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/db"
@@ -15,9 +16,10 @@ import (
 )
 
 type FAQ struct {
-	ID       string `json:"id"`
-	Question string `json:"question"`
-	Answer   string `json:"answer"`
+	ID        string `json:"id"`
+	Question  string `json:"question"`
+	Answer    string `json:"answer"`
+	CreatedAt int64  `json:"createdAt"`
 }
 
 var firestoreClient *db.Client
@@ -41,7 +43,7 @@ func initFirestore() {
 	}
 }
 
-func getFAQs(c *gin.Context) {
+func fetchFAQs(c *gin.Context) {
 	ctx := context.Background()
 	ref := firestoreClient.NewRef("faqs")
 	var faqs map[string]FAQ
@@ -62,11 +64,8 @@ func getFAQs(c *gin.Context) {
 	c.JSON(http.StatusOK, faqList)
 }
 
-func addFAQ(c *gin.Context) {
+func createFAQ(c *gin.Context) {
 	var faq FAQ
-	faq.ID = "asdasd"
-	faq.Question = "Question?"
-	faq.Answer = "Anwers!"
 	if err := c.ShouldBindJSON(&faq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -75,17 +74,29 @@ func addFAQ(c *gin.Context) {
 	ctx := context.Background()
 	ref := firestoreClient.NewRef("faqs")
 
-	// Push the new FAQ and handle both return values
 	newRef, err := ref.Push(ctx, faq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Set the ID of the FAQ to the newly created document's key
 	faq.ID = newRef.Key
+	faq.CreatedAt = time.Now().Unix()
 
 	c.JSON(http.StatusCreated, faq)
+}
+
+func deleteAllFAQs(c *gin.Context) {
+	ctx := context.Background()
+	ref := firestoreClient.NewRef("faqs")
+
+	// Set the "faqs" node to nil to delete all FAQs
+	if err := ref.Set(ctx, nil); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "All FAQs deleted successfully"})
 }
 
 func main() {
@@ -96,8 +107,9 @@ func main() {
 	initFirestore()
 
 	r := gin.Default()
-	r.GET("/faqs", getFAQs)
-	r.POST("/faqs", addFAQ)
+	r.GET("/faqs", fetchFAQs)
+	r.POST("/faqs", createFAQ)
+	r.DELETE("/faqs", deleteAllFAQs)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
