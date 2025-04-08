@@ -5,9 +5,10 @@ function useFAQs(url) {
   const [error, setError] = useState(undefined);
   const { loadFromSessionStorage, saveToSessionStorage } =
     useSessionStorage(url);
-  const [loading, setLoading] = useState(false);
   const [faqs, setFaqs] = useState(loadFromSessionStorage() || []);
   const [currentFAQIndex, setCurrentFAQIndex] = useState(0);
+
+  let loading = false;
 
   async function fetchFAQs() {
     try {
@@ -43,9 +44,9 @@ function useFAQs(url) {
 
   async function loadFAQs() {
     if (faqs.length === 0) {
-      setLoading(true);
+      loading = true;
       await fetchFAQs();
-      setLoading(false);
+      loading = false;
     }
   }
 
