@@ -3,8 +3,8 @@
 BASE_URL="http://localhost:8080"
 CONTENT_TYPE="application/json"
 
-# Create the json directory if it doesn't exist
-mkdir -p ./json
+DOCKER_IMAGE_NAME="knowledge-manager"
+PORT=8080
 
 function saveFAQsToJson() {
     local response="$1"
@@ -79,29 +79,78 @@ function deleteAllFAQs() {
     rm -rf ./json/faq-response.json
 }
 
-echo "**********************************"
-echo "         SELECT AN OPTION         "
-echo "**********************************"
-echo "1. Add new FAQ."
-echo "2. Get FAQS and save to JSON."
-echo "3. Delete all FAQs."
-read -p "Please enter a number: " option
+function buildDockerImage() {
+    docker build -t $DOCKER_IMAGE_NAME:latest .
 
-case $option in
-1)
-    addFAQ
-    exit 0
-    ;;
-2)
-    fetchFAQS
-    exit 0
-    ;;
-3)
-    deleteAllFAQs
-    exit 0
-    ;;
-*)
-    echo "Exiting"
-    exit 0
-    ;;
-esac
+}
+
+function runDockerContainer() {
+    docker run -e PORT=$PORT -p $PORT:$PORT $DOCKER_IMAGE_NAME:latest
+}
+
+function main() {
+    # Detect the platform
+    platform=$(uname -m)
+
+    case $platform in
+    x86_64)
+        os_platform="linux/amd64"
+        ;;
+    arm64)
+        os_platform="linux/amd64"
+        ;;
+    aarch64)
+        os_platform="linux/arm64"
+        ;;
+    armv7l)
+        os_platform="linux/arm/v7"
+        ;;
+    *)
+        echo "Unsupported architecture: $platform"
+        exit 1
+        ;;
+    esac
+
+    # Create dir if not exists
+    mkdir -p ./json
+
+    # Start the CLI menu
+    echo "**********************************"
+    echo "         SELECT AN OPTION         "
+    echo "**********************************"
+    echo "1. Add new FAQ."
+    echo "2. Get FAQS and save to JSON."
+    echo "3. Delete all FAQs."
+    echo "4. Build docker image."
+    echo "5. Run docker container (latest)."
+    read -p "Please enter a number [1-5]: " option
+
+    case $option in
+    1)
+        addFAQ
+        exit 0
+        ;;
+    2)
+        fetchFAQS
+        exit 0
+        ;;
+    3)
+        deleteAllFAQs
+        exit 0
+        ;;
+    4)
+        buildDockerImage
+        exit 0
+        ;;
+    5)
+        runDockerContainer
+        exit 0
+        ;;
+    *)
+        echo "Exiting"
+        exit 0
+        ;;
+    esac
+}
+
+main
