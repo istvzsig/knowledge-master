@@ -88,6 +88,10 @@ function runDockerContainer() {
     docker run -e PORT=$PORT -p $PORT:$PORT $DOCKER_IMAGE_NAME:latest
 }
 
+function startFrontend() {
+    npm --prefix ./frontend run dev
+}
+
 function main() {
     # Detect the platform
     platform=$(uname -m)
@@ -123,6 +127,7 @@ function main() {
     echo "3. Delete all FAQs."
     echo "4. Build docker image."
     echo "5. Run docker container (latest)."
+    echo "6. Start frontend."
     read -p "Please enter a number [1-5]: " option
 
     case $option in
@@ -144,6 +149,10 @@ function main() {
         ;;
     5)
         runDockerContainer
+        exit 0
+        ;;
+    6)
+        startFrontend
         exit 0
         ;;
     *)
