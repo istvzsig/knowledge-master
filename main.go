@@ -60,7 +60,6 @@ func fetchFAQs(c *gin.Context) {
 		faq.ID = key
 		faqList = append(faqList, faq)
 	}
-
 	c.JSON(http.StatusOK, faqList)
 }
 
@@ -107,11 +106,14 @@ func main() {
 	initFirestore()
 
 	r := gin.Default()
+
 	r.GET("/faqs", fetchFAQs)
 	r.POST("/faqs", createFAQ)
 	r.DELETE("/faqs", deleteAllFAQs)
 
-	if err := r.Run(":8080"); err != nil {
+	port := os.Getenv(("PORT"))
+
+	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }
