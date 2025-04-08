@@ -79,8 +79,17 @@ function deleteAllFAQs() {
     rm -rf ./json/faq-response.json
 }
 
-function buildDockerImage() {
-    docker build -t $DOCKER_IMAGE_NAME:latest .
+function deployToGoogleCloudRun() {
+    local id="knowledge-manager-68472"
+    docker build -t gcr.io/$id/faq-service .
+    # gcloud auth login
+    # gcloud config set project $id
+    docker push gcr.io/$id/faq-service
+    gcloud run deploy faq-service \
+        --image gcr.io/$id/faq-service \
+        --platform managed \
+        --region us-central1 \
+        --allow-unauthenticated
 
 }
 
@@ -125,7 +134,7 @@ function main() {
     echo "1. Add new FAQ."
     echo "2. Get FAQS and save to JSON."
     echo "3. Delete all FAQs."
-    echo "4. Build docker image."
+    echo "4. Deploy to Google Cloud Run."
     echo "5. Run docker container (latest)."
     echo "6. Start frontend."
     read -p "Please enter a number [1-5]: " option
@@ -144,7 +153,7 @@ function main() {
         exit 0
         ;;
     4)
-        buildDockerImage
+        deployToGoogleCloudRun
         exit 0
         ;;
     5)
