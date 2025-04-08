@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	firebase "firebase.google.com/go/v4"
@@ -60,7 +61,39 @@ func fetchFAQs(c *gin.Context) {
 		faq.ID = key
 		faqList = append(faqList, faq)
 	}
-	c.JSON(http.StatusOK, faqList)
+	// Get the current index from the query parameter
+	currentIndexStr := c.Query("next") // e.g., /faqs?next=1
+	currentIndex := 0
+	if currentIndexStr != "" {
+		var err error
+		currentIndex, err = strconv.Atoi(currentIndexStr)
+		if err != nil || currentIndex < 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid index"})
+			return
+		}
+	}
+
+	// Define the number of FAQs to return per page
+	const pageSize = 100
+
+	// Calculate the start and end indices for pagination
+	start := currentIndex * pageSize
+	end := start + pageSize
+
+	// Check if the start index is within the bounds of the FAQ list
+	if start >= len(faqList) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No more FAQs available"})
+		return
+	}
+
+	// Ensure the end index does not exceed the length of the list
+	if end > len(faqList) {
+		end = len(faqList)
+	}
+
+	// Return the paginated FAQs
+	paginatedFAQs := faqList[start:end]
+	c.JSON(http.StatusOK, paginatedFAQs)
 }
 
 func createFAQ(c *gin.Context) {
@@ -69,6 +102,8 @@ func createFAQ(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	faq.CreatedAt = time.Now().Unix()
 
 	ctx := context.Background()
 	ref := firestoreClient.NewRef("faqs")
@@ -80,7 +115,6 @@ func createFAQ(c *gin.Context) {
 	}
 
 	faq.ID = newRef.Key
-	faq.CreatedAt = time.Now().Unix()
 
 	c.JSON(http.StatusCreated, faq)
 }
@@ -111,9 +145,7 @@ func main() {
 	r.POST("/faqs", createFAQ)
 	r.DELETE("/faqs", deleteAllFAQs)
 
-	port := os.Getenv(("PORT"))
-
-	if err := r.Run(":" + port); err != nil {
+	if err := r.Run(":" + os.Getenv(("PORT"))); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }
