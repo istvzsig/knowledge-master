@@ -1,10 +1,10 @@
 #!/bin/bash
 
-BASE_URL="http://localhost:8080"
-CONTENT_TYPE="application/json"
+set -a
+source .env
+set +a
 
-DOCKER_IMAGE_NAME="knowledge-manager"
-PORT=8080
+CONTENT_TYPE="application/json"
 
 function saveFAQsToJson() {
     local response="$1"
@@ -48,7 +48,7 @@ function saveFAQsToJson() {
 }
 
 function fetchFAQS() {
-    local response=$(curl -X GET http://localhost:8080/faqs)
+    local response=$(curl -X GET $BACKEND_URL:$BACKEND_PORT/faqs)
     if [[ "$response" == "null" ]]; then
         echo "Response is null"
         rm -rf ./json/faq-response.json
@@ -61,7 +61,7 @@ function addFAQ() {
     read -p "Enter the question: " question
     read -p "Enter the answer: " answer
 
-    local response=$(curl -X POST $BASE_URL/faqs \
+    local response=$(curl -X POST $BACKEND_URL:$BACKEND_PORT/faqs \
         -H "Content-Type: $CONTENT_TYPE" \
         -d "{
     \"Question\": \"$question\",
@@ -71,7 +71,7 @@ function addFAQ() {
 }
 
 function deleteAllFAQs() {
-    local response=$(curl -X DELETE $BASE_URL/faqs)
+    local response=$(curl -X DELETE $BACKEND_URL:$BACKEND_PORT/faqs)
     if [[ $? -ne 0 ]]; then
         echo "Error: Failed to fetch FAQs."
         return 1
@@ -93,12 +93,16 @@ function deployToGoogleCloudRun() {
 
 }
 
-function runDockerContainer() {
-    docker run -e PORT=$PORT -p $PORT:$PORT $DOCKER_IMAGE_NAME:latest
+function runDockerContainerLatest() {
+    docker run -e BACKEND_PORT=$BACKEND_PORT -p $BACKEND_PORT:$BACKEND_PORT $DOCKER_IMAGE_NAME:latest
 }
 
 function startFrontend() {
     npm --prefix ./frontend run dev
+}
+
+function startBackend() {
+    go run ./main.go
 }
 
 function main() {
@@ -134,10 +138,11 @@ function main() {
     echo "1. Add new FAQ."
     echo "2. Get FAQS and save to JSON."
     echo "3. Delete all FAQs."
-    echo "4. Deploy to Google Cloud Run."
-    echo "5. Run docker container (latest)."
-    echo "6. Start frontend."
-    read -p "Please enter a number [1-5]: " option
+    echo "4. Start frontend."
+    echo "5. Start backend."
+    echo "6. Deploy to Google Cloud Run."
+    echo "7. Run docker container (latest)."
+    read -p "Please enter a number [1-7]: " option
 
     case $option in
     1)
@@ -153,15 +158,19 @@ function main() {
         exit 0
         ;;
     4)
-        deployToGoogleCloudRun
+        startFrontend
         exit 0
         ;;
     5)
-        runDockerContainer
+        startBackend
         exit 0
         ;;
     6)
-        startFrontend
+        deployToGoogleCloudRun
+        exit 0
+        ;;
+    7)
+        runDockerContainerLatest
         exit 0
         ;;
     *)
