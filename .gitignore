@@ -3,3 +3,16 @@
 # Ignore Terraform state files
 *.tfstate
 *.tfstate.*
+
+# Ignore Terraform backup files
+*.tfstate.backup
+
+# Ignore Terraform plan files
+*.tfplan
+
+# Ignore local .terraform directories
+.terraform/
+
+# Ignore Terraform variable files (if they contain sensitive data)
+*.tfvars
+*.tfvars.json
