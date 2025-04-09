@@ -4,8 +4,6 @@ set -a
 source .env
 set +a
 
-CONTENT_TYPE="application/json"
-
 function saveFAQsToJson() {
     local response="$1"
 
