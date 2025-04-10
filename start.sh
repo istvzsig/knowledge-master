@@ -10,32 +10,7 @@ function saveFAQsToJson() {
     # Define the JSON file path
     local jsonFile="./json/faq-response.json"
 
-    # Check if the response is empty
-    if [[ -z "$response" ]]; then
-        # Create an empty JSON array if the file does not exist
-        if [[ ! -f "$jsonFile" ]]; then
-            echo "[]" >"$jsonFile"
-            echo "Created an empty JSON array in $jsonFile"
-        else
-            echo "Error: No response provided."
-            return 1
-        fi
-    else
-        # Check if the JSON file exists
-        if [[ -f "$jsonFile" ]]; then
-            # Read the existing content
-            existingContent=$(<"$jsonFile")
-
-            # Combine existing content with new response
-            combinedContent=$(echo "$existingContent" | jq --argjson newData "$response" '. += [$newData]')
-
-            # Save the combined content back to the JSON file
-            echo "$combinedContent" >"$jsonFile"
-        else
-            # If the file does not exist, create it with the new response in an array
-            echo "[$response]" | jq . >"$jsonFile"
-        fi
-    fi
+    echo "$response" | jq . >$jsonFile
 
     if [ $? -ne 0 ]; then
         echo "Error: Failed to save FAQs to JSON."
@@ -47,12 +22,7 @@ function saveFAQsToJson() {
 
 function fetchFAQS() {
     local response=$(curl -X GET $BACKEND_URL:$BACKEND_PORT/faqs)
-    if [[ "$response" == "null" ]]; then
-        echo "Response is null"
-        rm -rf ./json/faq-response.json
-        return 1
-    fi
-    saveFAQsToJson "$response"
+    echo "$response"
 }
 
 function addFAQ() {
@@ -65,7 +35,9 @@ function addFAQ() {
     \"Question\": \"$question\",
     \"Answer\": \"$answer\"
 }")
-    saveFAQsToJson "$response"
+
+    echo $response
+
 }
 
 function deleteAllFAQs() {
@@ -145,14 +117,19 @@ function main() {
     case $option in
     1)
         addFAQ
+        response=$(fetchFAQS)
+        saveFAQsToJson "$response"
         exit 0
         ;;
     2)
-        fetchFAQS
+        response=$(fetchFAQS)
+        saveFAQsToJson "$response"
         exit 0
         ;;
     3)
         deleteAllFAQs
+        response=$(fetchFAQS)
+        saveFAQsToJson "$response"
         exit 0
         ;;
     4)
