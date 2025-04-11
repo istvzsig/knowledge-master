@@ -4,15 +4,10 @@ go 1.23.4
 
 require (
 	github.com/gin-gonic/gin v1.10.0
-	github.com/stretchr/testify v1.10.0
 	google.golang.org/api v0.228.0
 )
 
-require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
-)
+require google.golang.org/appengine v1.6.8 // indirect
 
 require (
 	cel.dev/expr v0.19.2 // indirect
