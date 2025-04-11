@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/istvzsig/knowledge-menager/config"
-	"github.com/istvzsig/knowledge-menager/routes"
+	"github.com/istvzsig/knowledge-master/config"
+	"github.com/istvzsig/knowledge-master/routes"
 )
 
 func main() {
