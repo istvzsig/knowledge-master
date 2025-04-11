@@ -2,16 +2,16 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/istvzsig/knowledge-master/handlers"
 )
 
-func InitRouter() *gin.Engine {
-	r := gin.Default()
-	fm := handlers.NewFAQMaster()
+type router struct {
+	*gin.Engine
+	Port string
+}
 
-	r.GET("/faqs", fm.HandleFetchFAQs)
-	r.POST("/faqs", fm.HandleCreateFAQ)
-	r.DELETE("/faqs", fm.HandleDeleteFAQs)
-
-	return r
+func NewRouter(port string) *router {
+	return &router{
+		Engine: gin.Default(),
+		Port:   port,
+	}
 }

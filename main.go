@@ -5,19 +5,22 @@ import (
 	"os"
 
 	"github.com/istvzsig/knowledge-master/db"
+	"github.com/istvzsig/knowledge-master/handlers"
 	"github.com/istvzsig/knowledge-master/router"
 )
 
 func main() {
 	db.InitFirestore()
-	r := router.InitRouter()
 
 	port := os.Getenv("BACKEND_PORT")
-	if port == "" {
-		port = "8080"
-	}
+	r := router.NewRouter(":" + port)
 
-	if err := r.Run(":" + port); err != nil {
+	fm := handlers.NewFAQMaster()
+	r.GET("/faqs", fm.HandleFetchFAQs)
+	r.POST("/faqs", fm.HandleCreateFAQ)
+	r.DELETE("/faqs", fm.HandleDeleteFAQs)
+
+	if err := r.Run(r.Port); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
