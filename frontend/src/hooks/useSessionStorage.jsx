@@ -1,15 +1,15 @@
-function useSessionStorage(url) {
-  function loadFromSessionStorage() {
-    return JSON.parse(window.sessionStorage.getItem(`/${url}`));
+function useSessionStorage() {
+  function load(path) {
+    return JSON.parse(window.sessionStorage.getItem(path));
   }
 
-  function saveToSessionStorage(data) {
-    window.sessionStorage.setItem(`/${url}`, JSON.stringify(data));
+  function save(path, data) {
+    window.sessionStorage.setItem(path, JSON.stringify(data));
   }
 
   return {
-    loadFromSessionStorage,
-    saveToSessionStorage,
+    load,
+    save,
   };
 }
 

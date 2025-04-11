@@ -1,37 +1,29 @@
 import { useState, useEffect } from "react";
 import useSessionStorage from "../hooks/useSessionStorage";
 
-function setFAQCreationDate(faq) {
-  faq.createdAt = new Date(faq.createdAt * 1000).toLocaleString();
-}
+import * as config from "../config";
 
-function useFAQs(url) {
+function useFAQs(path = "/faqs") {
+  const sessionStorage = useSessionStorage();
+  const [faqs, setFaqs] = useState(sessionStorage.load(path) || []);
   const [error, setError] = useState(undefined);
-  const { loadFromSessionStorage, saveToSessionStorage } =
-    useSessionStorage(url);
-  const [faqs, setFaqs] = useState(loadFromSessionStorage() || []);
 
   let loading = false;
   let currentFAQIndex = 0;
 
   async function fetchFAQs() {
     try {
-      const response = await fetch("/" + url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
+      const response = await fetch(path, config.headers.faqs);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      data.forEach(
+        (d) => (d.createdAt = new Date(d.createdAt * 1000).toLocaleString())
+      );
 
-      data.forEach((d) => setFAQCreationDate(d));
-      setFaqs(data);
-      saveToSessionStorage(data);
+      return data;
     } catch (err) {
       console.error("Error fetching FAQs:", err);
       setError(err);
@@ -47,14 +39,17 @@ function useFAQs(url) {
   async function loadFAQs() {
     if (faqs.length === 0) {
       loading = true;
-      await fetchFAQs();
+      const faqs = await fetchFAQs();
+      setFaqs(faqs);
+      sessionStorage.save(path, faqs);
       loading = false;
     }
   }
 
   useEffect(() => {
     loadFAQs();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [path]);
 
   const nextFAQ = faqs[currentFAQIndex];
 

@@ -4,7 +4,7 @@ import FAQComponent from "./faq/FAQComponent";
 import FAQListComponent from "./faq/FAQListComponent";
 
 export default function App() {
-  const { faqs, loading } = useFAQs("faqs");
+  const { faqs, loading } = useFAQs();
   return (
     <div>
       {loading ? (

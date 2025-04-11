@@ -1,0 +1,32 @@
+:root {
+  --violet: blueviolet;
+}
+
+div.faq {
+  background-color: black;
+  color: white;
+  padding: 1rem;
+}
+
+div.faq * {
+  padding: 0.5rem;
+}
+
+p.faq-id {
+  color: var(--violet);
+  font-size: 80%;
+}
+
+h3.faq-question {
+  font-size: 150%;
+}
+
+h3.faq-anwser {
+}
+
+p.faq-created-at {
+  font-size: 70%;
+  font-style: italic;
+  /* text-align: right; */
+  opacity: 50%;
+}
