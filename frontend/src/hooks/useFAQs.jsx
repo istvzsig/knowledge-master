@@ -1,14 +1,18 @@
 import { useState, useEffect } from "react";
 import useSessionStorage from "../hooks/useSessionStorage";
 
+function setFAQCreationDate(faq) {
+  faq.createdAt = new Date(faq.createdAt * 1000).toLocaleString();
+}
+
 function useFAQs(url) {
   const [error, setError] = useState(undefined);
   const { loadFromSessionStorage, saveToSessionStorage } =
     useSessionStorage(url);
   const [faqs, setFaqs] = useState(loadFromSessionStorage() || []);
-  const [currentFAQIndex, setCurrentFAQIndex] = useState(0);
 
   let loading = false;
+  let currentFAQIndex = 0;
 
   async function fetchFAQs() {
     try {
@@ -22,11 +26,10 @@ function useFAQs(url) {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
+
       const data = await response.json();
 
-      data.forEach((d) => {
-        d.createdAt = new Date(d.createdAt * 1000).toLocaleString();
-      });
+      data.forEach((d) => setFAQCreationDate(d));
       setFaqs(data);
       saveToSessionStorage(data);
     } catch (err) {
@@ -37,8 +40,7 @@ function useFAQs(url) {
 
   function getNextFAQ() {
     if (faqs.length > 0) {
-      const nextIndex = Math.floor((currentFAQIndex + 1) % faqs.length);
-      setCurrentFAQIndex(nextIndex);
+      currentFAQIndex = Math.floor((currentFAQIndex + 1) % faqs.length);
     }
   }
 
