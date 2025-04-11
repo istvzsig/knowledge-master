@@ -4,14 +4,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/istvzsig/knowledge-master/config"
-	"github.com/istvzsig/knowledge-master/routes"
+	"github.com/istvzsig/knowledge-master/db"
+	"github.com/istvzsig/knowledge-master/router"
 )
 
 func main() {
-	config.InitFirestore()
-
-	r := routes.SetupRouter()
+	db.InitFirestore()
+	r := router.InitRouter()
 
 	port := os.Getenv("BACKEND_PORT")
 	if port == "" {

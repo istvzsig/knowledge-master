@@ -6,25 +6,25 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/istvzsig/knowledge-menager/config"
-	"github.com/istvzsig/knowledge-menager/models"
+	"github.com/istvzsig/knowledge-master/db"
+	"github.com/istvzsig/knowledge-master/models"
 
 	"github.com/gin-gonic/gin"
 )
 
-type FAQManager struct {
+type FAQMaster struct {
 	FAQs map[string]models.FAQ
 }
 
-func NewFAQManager() *FAQManager {
-	return &FAQManager{
+func NewFAQMaster() *FAQMaster {
+	return &FAQMaster{
 		FAQs: make(map[string]models.FAQ),
 	}
 }
 
-func (fm *FAQManager) HandleFetchFAQs(c *gin.Context) {
+func (fm *FAQMaster) HandleFetchFAQs(c *gin.Context) {
 	ctx := context.Background()
-	ref := config.FirestoreClient.NewRef("faqs")
+	ref := db.FirestoreClient.NewRef("faqs")
 
 	faqs := fm.FAQs
 	if err := ref.Get(ctx, &faqs); err != nil {
@@ -38,7 +38,7 @@ func (fm *FAQManager) HandleFetchFAQs(c *gin.Context) {
 		faqList = append(faqList, faq)
 	}
 
-	paginatedFAQs, err := paginateFAQs(faqList, c.Query("next"), 100)
+	paginatedFAQs, err := paginateFAQs(faqList, c.Query("next"), 1)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -52,7 +52,7 @@ func (fm *FAQManager) HandleFetchFAQs(c *gin.Context) {
 	c.JSON(http.StatusOK, paginatedFAQs)
 }
 
-func (fm *FAQManager) HandleCreateFAQ(c *gin.Context) {
+func (fm *FAQMaster) HandleCreateFAQ(c *gin.Context) {
 	var faq models.FAQ
 	if err := c.ShouldBindJSON(&faq); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -61,7 +61,7 @@ func (fm *FAQManager) HandleCreateFAQ(c *gin.Context) {
 	faq.CreatedAt = time.Now().Unix()
 
 	ctx := context.Background()
-	ref := config.FirestoreClient.NewRef("faqs")
+	ref := db.FirestoreClient.NewRef("faqs")
 
 	newRef, err := ref.Push(ctx, faq)
 	if err != nil {
@@ -73,9 +73,9 @@ func (fm *FAQManager) HandleCreateFAQ(c *gin.Context) {
 	c.JSON(http.StatusCreated, faq)
 }
 
-func (fm *FAQManager) HandleDeleteFAQs(c *gin.Context) {
+func (fm *FAQMaster) HandleDeleteFAQs(c *gin.Context) {
 	ctx := context.Background()
-	ref := config.FirestoreClient.NewRef("faqs")
+	ref := db.FirestoreClient.NewRef("faqs")
 
 	if err := ref.Set(ctx, nil); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
