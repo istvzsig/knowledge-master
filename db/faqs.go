@@ -56,7 +56,11 @@ func GetFAQs() ([]types.FAQ, error) {
 		if res.err != nil {
 			log.Printf("Error fetching FAQs: %v", res.err)
 		}
-		return res.faqs, res.err
+		if len(res.faqs) > 0 {
+			return res.faqs, nil
+		} else {
+			return nil, fmt.Errorf("No FAQs found.")
+		}
 	case <-ctx.Done():
 		return nil, fmt.Errorf("get FAQs operation timed out")
 	}
@@ -100,7 +104,7 @@ func CreateFAQ(faq types.FAQ) (string, error) {
 }
 
 func DeleteAllFAQs() error {
-	ctx, cancel := getContextWithTimeout(2000)
+	ctx, cancel := getContextWithTimeout(10)
 	defer cancel()
 
 	errCh := make(chan error)
