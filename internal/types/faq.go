@@ -1,4 +1,4 @@
-package models
+package types
 
 type FAQ struct {
 	ID        string `json:"id"`

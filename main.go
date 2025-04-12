@@ -1,26 +1,22 @@
 package main
 
 import (
-	"log"
-	"os"
-
 	"github.com/istvzsig/knowledge-master/db"
-	"github.com/istvzsig/knowledge-master/handlers"
-	"github.com/istvzsig/knowledge-master/router"
+	"github.com/istvzsig/knowledge-master/internal/faq"
+	"github.com/istvzsig/knowledge-master/internal/types"
+	"github.com/istvzsig/knowledge-master/pkg/config"
+	"github.com/istvzsig/knowledge-master/pkg/router"
 )
 
 func main() {
 	db.InitFirestore()
+	cfg := config.LoadConfig()
+	km := types.NewKnowledgeMaster()
+	s := faq.NewFAQService(km)
+	r := router.SetupRouter(s)
 
-	port := os.Getenv("BACKEND_PORT")
-	r := router.NewRouter(":" + port)
-
-	fm := handlers.NewFAQMaster()
-	r.GET("/faqs", fm.HandleFetchFAQs)
-	r.POST("/faqs", fm.HandleCreateFAQ)
-	r.DELETE("/faqs", fm.HandleDeleteFAQs)
-
-	if err := r.Run(r.Port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Start the server
+	if err := r.Run(":" + cfg.ServerPort); err != nil {
+		panic("Failed to start server")
 	}
 }
