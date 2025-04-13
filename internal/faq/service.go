@@ -8,7 +8,7 @@ import (
 type Service interface {
 	FetchFAQs() ([]types.FAQ, error)
 	CreateFAQ(faq types.FAQ) (string, error)
-	DeleteAllFAQs() error
+	DeleteAllFAQs() ([]types.FAQ, error)
 	DeleteFAQByID(id string) error
 }
 
@@ -31,7 +31,7 @@ func (s *faqService) CreateFAQ(faq types.FAQ) (string, error) {
 }
 
 // DeleteAllFAQs deletes all FAQs from the database.
-func (s *faqService) DeleteAllFAQs() error {
+func (s *faqService) DeleteAllFAQs() ([]types.FAQ, error) {
 	return db.DeleteAllFAQs()
 }
 

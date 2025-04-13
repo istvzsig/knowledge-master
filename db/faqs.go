@@ -14,7 +14,7 @@ var mu sync.Mutex
 var faqsMap = make(map[string]types.FAQ)
 
 func GetFAQs() ([]types.FAQ, error) {
-	ctx, cancel := getContextWithTimeout(50000)
+	ctx, cancel := getContextWithTimeout(500)
 	defer cancel()
 
 	respChan := make(chan struct {
@@ -59,7 +59,7 @@ func GetFAQs() ([]types.FAQ, error) {
 		if len(res.faqs) > 0 {
 			return res.faqs, nil
 		} else {
-			return nil, fmt.Errorf("No FAQs found.")
+			return nil, fmt.Errorf("no FAQs found.")
 		}
 	case <-ctx.Done():
 		return nil, fmt.Errorf("get FAQs operation timed out")
@@ -103,22 +103,31 @@ func CreateFAQ(faq types.FAQ) (string, error) {
 	}
 }
 
-func DeleteAllFAQs() error {
-	ctx, cancel := getContextWithTimeout(10)
+func DeleteAllFAQs() ([]types.FAQ, error) {
+	ctx, cancel := getContextWithTimeout(20)
 	defer cancel()
 
-	errCh := make(chan error)
+	respChan := make(chan struct {
+		faqs []types.FAQ
+		err  error
+	})
 
 	go func() {
 		ref := FirestoreClient.NewRef("faqs")
-		errCh <- ref.Set(ctx, nil)
-	}()
 
+		if err := ref.Set(ctx, nil); err != nil {
+			respChan <- struct {
+				faqs []types.FAQ
+				err  error
+			}{nil, fmt.Errorf("failed to get FAQs: %w", err)}
+			return
+		}
+	}()
 	select {
-	case err := <-errCh:
-		return err
+	case resp := <-respChan:
+		return resp.faqs, nil
 	case <-ctx.Done():
-		return fmt.Errorf("delete all FAQs operation timed out")
+		return nil, fmt.Errorf("delete all FAQs operation timed out")
 	}
 }
 

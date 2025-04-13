@@ -38,7 +38,7 @@ func HandleCreateFAQ(c *gin.Context, service Service) {
 
 // HandleDeleteAllFAQs handles the request to delete all FAQs.
 func HandleDeleteAllFAQs(c *gin.Context, service Service) {
-	err := service.DeleteAllFAQs()
+	err, _ := service.DeleteAllFAQs()
 	if err != nil {
 		utils.HandleError(c, http.StatusInternalServerError, fmt.Sprintf("Error deleting all FAQs: %v", err))
 		return
