@@ -14,7 +14,7 @@ var mu sync.Mutex
 var faqsMap = make(map[string]types.FAQ)
 
 func GetFAQs() ([]types.FAQ, error) {
-	ctx, cancel := getContextWithTimeout(500)
+	ctx, cancel := getContextWithTimeout(10000)
 	defer cancel()
 
 	respChan := make(chan struct {
