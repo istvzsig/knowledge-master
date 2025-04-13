@@ -2,19 +2,19 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/istvzsig/knowledge-master/internal/faq"
+	"github.com/istvzsig/knowledge-master/internal/knowledge_master"
 )
 
-func SetupRouter(service faq.Service) *gin.Engine {
-	router := gin.Default()
+func SetupRouter() *gin.Engine {
+	r := gin.Default()
 
-	api := router.Group("/faqs")
+	api := r.Group("/faqs")
 	{
-		api.GET("", func(c *gin.Context) { faq.HandleFetchFAQs(c, service) })
-		api.POST("", func(c *gin.Context) { faq.HandleCreateFAQ(c, service) })
-		api.PATCH("/:id", func(c *gin.Context) { faq.HandleDeleteFAQByID(c, service) })
-		api.DELETE("", func(c *gin.Context) { faq.HandleDeleteAllFAQs(c, service) })
+		api.GET("", func(c *gin.Context) { knowledge_master.HandleFetchFAQs(c) })
+		api.POST("", func(c *gin.Context) { knowledge_master.HandleCreateFAQ(c) })
+		api.PATCH("/:id", func(c *gin.Context) { knowledge_master.HandleDeleteFAQByID(c) })
+		api.DELETE("", func(c *gin.Context) { knowledge_master.HandleDeleteAllFAQs(c) })
 	}
 
-	return router
+	return r
 }

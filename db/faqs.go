@@ -104,7 +104,7 @@ func CreateFAQ(faq types.FAQ) (string, error) {
 }
 
 func DeleteAllFAQs() ([]types.FAQ, error) {
-	ctx, cancel := getContextWithTimeout(20)
+	ctx, cancel := getContextWithTimeout(2000)
 	defer cancel()
 
 	respChan := make(chan struct {

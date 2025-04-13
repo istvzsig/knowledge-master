@@ -6,3 +6,10 @@ type FAQ struct {
 	Answer    string `json:"answer"`
 	CreatedAt int64  `json:"createdAt"`
 }
+
+type FAQService interface {
+	FetchFAQs() ([]FAQ, error)
+	CreateFAQ(faq FAQ) (string, error)
+	DeleteAllFAQs() ([]FAQ, error)
+	DeleteFAQByID(id string) error
+}
