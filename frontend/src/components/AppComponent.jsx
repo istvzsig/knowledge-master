@@ -1,18 +1,18 @@
 import useFAQs from "../hooks/useFAQs";
 
 import FAQComponent from "./faq/FAQComponent";
-import FAQListComponent from "./faq/FAQListComponent";
 
 export default function App() {
-  const { faqs, loading } = useFAQs();
+  const { faq, loading } = useFAQs();
+
   return (
     <div>
       {loading ? (
         <h1>Loading...</h1>
       ) : (
         <div>
-          <FAQListComponent faqs={faqs} />
-          {/* <FAQComponent faq={nextFAQ} /> */}
+          {faq && <FAQComponent faq={faq} />}
+          <button onClick={null}>ASD</button>
         </div>
       )}
     </div>

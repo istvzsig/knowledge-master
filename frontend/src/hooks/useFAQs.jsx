@@ -9,7 +9,7 @@ function useFAQs(path = "/faqs") {
   const [error, setError] = useState(undefined);
 
   let loading = false;
-  let currentFAQIndex = 0;
+  let currentIndex = 0;
 
   async function fetchFAQs() {
     try {
@@ -17,22 +17,10 @@ function useFAQs(path = "/faqs") {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      const data = await response.json();
-      data.forEach(
-        (d) => (d.createdAt = new Date(d.createdAt * 1000).toLocaleString())
-      );
-
-      return data;
+      return await response.json();
     } catch (err) {
       console.error("Error fetching FAQs:", err);
       setError(err);
-    }
-  }
-
-  function getNextFAQ() {
-    if (faqs.length > 0) {
-      currentFAQIndex = Math.floor((currentFAQIndex + 1) % faqs.length);
     }
   }
 
@@ -51,9 +39,7 @@ function useFAQs(path = "/faqs") {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
 
-  const nextFAQ = faqs[currentFAQIndex];
-
-  return { faqs, error, loading, nextFAQ, getNextFAQ };
+  return { faq: faqs[currentIndex], faqs, error, loading };
 }
 
 export default useFAQs;
