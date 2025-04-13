@@ -75,7 +75,7 @@ function startBackend() {
     go run ./main.go
 }
 
-function main() {
+function detectOSPlatform() {
     # Detect the platform
     platform=$(uname -m)
 
@@ -97,21 +97,27 @@ function main() {
         exit 1
         ;;
     esac
+}
 
-    # Create dir if not exists
-    mkdir -p ./json
-
+function mainMenu() {
     # Start the CLI menu
     echo "**********************************"
     echo "         SELECT AN OPTION         "
     echo "**********************************"
     echo "1. Add new FAQ."
-    echo "2. Get FAQS and save to JSON."
-    echo "3. Delete all FAQs."
+    echo "2. Save FAQs to JSON."
+    echo "3. Delete all FAQs from database."
     echo "4. Start frontend."
     echo "5. Start backend."
     echo "6. Deploy to Google Cloud Run."
     echo "7. Run docker container (latest)."
+}
+
+function main() {
+    detectOSPlatform
+    mkdir -p ./json
+    mainMenu
+
     read -p "Please enter a number [1-7]: " option
 
     case $option in
