@@ -2,7 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/istvzsig/knowledge-master/internal/knowledge_master"
+	knowledge_master "github.com/istvzsig/knowledge-master/internal/api"
 )
 
 func SetupRouter() *gin.Engine {

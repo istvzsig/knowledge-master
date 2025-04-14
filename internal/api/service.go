@@ -5,7 +5,7 @@ import (
 	"github.com/istvzsig/knowledge-master/internal/types"
 )
 
-func FetchFAQs() ([]types.FAQ, error) {
+func FetchFAQs() (any, error) {
 	return db.GetFAQs()
 }
 
@@ -13,7 +13,7 @@ func CreateFAQ(faq types.FAQ) (string, error) {
 	return db.CreateFAQ(faq)
 }
 
-func DeleteAllFAQs() ([]types.FAQ, error) {
+func DeleteAllFAQs() (any, error) {
 	return db.DeleteAllFAQs()
 }
 
