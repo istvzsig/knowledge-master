@@ -7,63 +7,37 @@ import (
 	"sync"
 	"time"
 
+	"maps"
+
 	"github.com/google/uuid"
 	F "github.com/istvzsig/knowledge-master/internal/types"
 	T "github.com/istvzsig/knowledge-master/pkg/types"
 )
 
+const RESPONSE_TIMOUT = 10000
+const BUFF_SIZE = 1000
+
 var mu sync.Mutex
 var faqCollection = T.NewCollection[F.FAQ]()
 
 func GetFAQs() (*T.Collection[F.FAQ], error) {
-	ctx, cancel := getContextWithTimeout(10000)
-	defer cancel()
-
-	respChan := make(chan F.GetFAQsResponse)
-
-	go func() {
+	return responseWithTimeout(RESPONSE_TIMOUT, BUFF_SIZE, func(ctx context.Context) (*T.Collection[F.FAQ], error) {
 		ref := FirestoreClient.NewRef("faqs")
 
 		if err := ref.Get(ctx, &faqCollection.Items); err != nil {
-			respChan <- F.GetFAQsResponse{
-				FAQs: nil,
-				Err:  fmt.Errorf("failed to get FAQs: %w", err),
-			}
-			return
+			return nil, fmt.Errorf("failed to get FAQs: %w", err)
 		}
 
 		mu.Lock()
-		for key, faq := range faqCollection.Items {
-			fmt.Println(faq)
-			faqCollection.Items[key] = faq
-
-		}
+		maps.Copy(faqCollection.Items, faqCollection.Items)
 		mu.Unlock()
 
-		respChan <- F.GetFAQsResponse{
-			FAQs: faqCollection,
-			Err:  nil,
-		}
-	}()
-
-	select {
-	case res := <-respChan:
-		if res.Err != nil {
-			log.Printf("Error fetching FAQs: %v", res.Err)
-		}
-		return res.FAQs, nil
-	case <-ctx.Done():
-		return nil, fmt.Errorf("Getting FAQs timed out.")
-	}
+		return faqCollection, nil
+	})
 }
 
 func CreateFAQ(faq F.FAQ) (string, error) {
-	ctx, cancel := getContextWithTimeout(2000)
-	defer cancel()
-
-	respChan := make(chan F.CreateFAQResponse)
-
-	go func() {
+	return responseWithTimeout(RESPONSE_TIMOUT, BUFF_SIZE, func(ctx context.Context) (string, error) {
 		ref := FirestoreClient.NewRef("faqs")
 
 		faq.CreatedAt = time.Now().Unix()
@@ -71,77 +45,64 @@ func CreateFAQ(faq F.FAQ) (string, error) {
 
 		newRef, err := ref.Push(ctx, faq)
 		if err != nil {
-			respChan <- F.CreateFAQResponse{
-				Key: "",
-				Err: fmt.Errorf("failed to create FAQ: %w", err)}
-			return
+			return "", fmt.Errorf("failed to create FAQ: %w", err)
 		}
 
-		respChan <- F.CreateFAQResponse{
-			Key: newRef.Key,
-			Err: nil,
-		}
-	}()
-
-	select {
-	case res := <-respChan:
-		if res.Err != nil {
-			log.Printf("Error pushing FAQ to Firestore: %v", res.Err)
-		}
-		return res.Key, res.Err
-	case <-ctx.Done():
-		return "", fmt.Errorf("create FAQ operation timed out")
-	}
+		return newRef.Key, nil
+	})
 }
 
 func DeleteAllFAQs() (any, error) {
-	ctx, cancel := getContextWithTimeout(2000)
-	defer cancel()
-
-	respChan := make(chan F.DeleteAllFAQsResponse)
-
-	go func() {
+	return responseWithTimeout(RESPONSE_TIMOUT, BUFF_SIZE, func(ctx context.Context) (any, error) {
 		ref := FirestoreClient.NewRef("faqs")
 		if err := ref.Set(ctx, nil); err != nil {
-			respChan <- F.DeleteAllFAQsResponse{
-				FAQs: nil,
-				Err:  fmt.Errorf("failed to get FAQs: %w", err),
-			}
-			return
+			return nil, fmt.Errorf("failed to delete all FAQs: %w", err)
 		}
-	}()
-	select {
-	case resp := <-respChan:
-		return resp.FAQs, nil
-	case <-ctx.Done():
-		return nil, fmt.Errorf("delete all FAQs operation timed out")
-	}
+		return nil, nil
+	})
 }
 
 func DeleteFAQByID(id string) error {
-	ctx, cancel := getContextWithTimeout(500)
-	defer cancel()
-
-	errCh := make(chan error)
-
-	go func() {
+	_, err := responseWithTimeout(RESPONSE_TIMOUT, BUFF_SIZE, func(ctx context.Context) (struct{}, error) {
 		fRef := FirestoreClient.NewRef("faqs")
 		ref := fRef.Child(id)
-		errCh <- ref.Delete(ctx)
+
+		if err := ref.Delete(ctx); err != nil {
+			return struct{}{}, fmt.Errorf("failed to delete FAQ with ID %s: %w", id, err)
+		}
+
+		return struct{}{}, nil
+	})
+
+	if err != nil {
+		log.Printf("Error deleting FAQ with ID %s: %v", id, err)
+	}
+
+	return err
+}
+
+func responseWithTimeout[T any](timeout time.Duration, buf int, fn func(ctx context.Context) (T, error)) (T, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Millisecond*timeout)
+	defer cancel()
+
+	resultChan := make(chan struct {
+		val T
+		err error
+	}, buf)
+
+	go func() {
+		val, err := fn(ctx)
+		resultChan <- struct {
+			val T
+			err error
+		}{val, err}
 	}()
 
 	select {
-	case err := <-errCh:
-		if err != nil {
-			log.Printf("Error deleting FAQ with ID %s: %v", id, err)
-			return fmt.Errorf("failed to delete FAQ with ID %s: %w", id, err)
-		}
-		return nil
+	case res := <-resultChan:
+		return res.val, res.err
 	case <-ctx.Done():
-		return fmt.Errorf("delete FAQ by ID operation timed out")
+		var zero T
+		return zero, fmt.Errorf("operation timed out after %dms", timeout)
 	}
-}
-
-func getContextWithTimeout(timeout time.Duration) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), time.Millisecond*timeout)
 }
